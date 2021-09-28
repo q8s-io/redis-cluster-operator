@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    redis.kun/scope: cluster-scoped
+  name: mysecret
+type: Opaque
+data:
+  password: MTIzNDU2  # 密码123456
+---
+apiVersion: redis.kun/v1alpha1
+kind: DistributedRedisCluster
+metadata:
+  annotations:
+    redis.kun/scope: cluster-scoped
+    slave-num: "3" # 启动集群式若加载旧数据，该字段可以指定 slave 节点数量
+  name: example-distributedrediscluster
+  namespace: redis
+spec:
+  image: redis:6.2-rc3-alpine
+  masterSize: 5  # master 数量
+  serviceName: redis-svc # service 名称
+  #pvNames: #指定pv加载旧数据
+  #- redis.pvc-348ee8e1-8762-4cce-be72-7248cbbca44c
+  #- redis.pvc-3c3ab47e-3759-4a13-ae69-9d8b6ce0823a
+  #- redis.pvc-c3ef4e42-4c14-4cf6-be5d-6c5148681942
+  #- redis.pvc-515c0a92-f6a2-4457-ac13-0bbd03e1a34d
+  #- redis.pvc-68d4d3a7-8c57-4f75-998f-e59cb6c90d72
+  clusterReplicas: 1 # 每个 mster 的slave 节点数量，若 pvNames字段被设置，则不起作用，slave的数量需要在 annotations.slave-num 中指定
+  passwordSecret:
+      name: mysecret # redis 密码
+  storage:
+    type: persistent-claim
+    size: 1Gi
+    class: kubevirt-hostpath-provisioner
+    deleteClaim: false # 保留 master pv，true 不保留
+  config: # redis 配置
+    activerehashing: "yes"
+    appendfsync: everysec
+    appendonly: "yes"
+    hash-max-ziplist-entries: "512"
+    hash-max-ziplist-value: "64"
+    hll-sparse-max-bytes: "3000"
+    list-compress-depth: "0"
+    maxmemory-policy: noeviction
+    maxmemory-samples: "5"
+    no-appendfsync-on-rewrite: "no"
+    notify-keyspace-events: ""
+    set-max-intset-entries: "512"
+    slowlog-log-slower-than: "10000"
+    slowlog-max-len: "128"
+    stop-writes-on-bgsave-error: "yes"
+    tcp-keepalive: "0"
+    timeout: "0"
+    zset-max-ziplist-entries: "128"
+    zset-max-ziplist-value: "64"

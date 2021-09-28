@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis-cluster-operator
+  namespace: redis
 spec:
   replicas: 1
   selector:
@@ -16,18 +17,14 @@ spec:
       containers:
         - name: redis-cluster-operator
           # Replace this with the built image name
-          image: fishu/redis-cluster-operator:latest
-          command:
-            - redis-cluster-operator
+          image: uhub.service.ucloud.cn/infra/redis-cluster-operator:v1
           args:
-            - --rename-command-path=/etc/redisconf
-            - --rename-command-file=redis.conf
+          - --rename-command-path=/etc/redisconf
+          - --rename-command-file=redis.conf
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -46,6 +43,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-admin
+  namespace: redis
 data:
   redis.conf: |-
     rename-command CONFIG lni07z1p
